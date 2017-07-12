@@ -122,11 +122,12 @@ describe("kong start/stop", function()
       helpers.dao:run_migrations()
     end)
 
-    it("automatically migrates database on first run", function()
-      assert(helpers.kong_exec("start --conf "..helpers.test_conf_path))
-    end)
-
     describe("errors", function()
+      it("does not start with an empty datastore", function()
+        local ok, stderr  = helpers.kong_exec("start --conf "..helpers.test_conf_path)
+        assert.False(ok)
+        assert.matches("migrations are not up to date", stderr)
+      end)
       it("does not start if migrations are not up to date", function()
         helpers.dao:run_migrations()
         -- Delete a migration to simulate inconsistencies between version

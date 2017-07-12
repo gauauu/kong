@@ -17,10 +17,19 @@ local function execute(args)
   local dao = assert(DAOFactory.new(conf))
   xpcall(function()
     assert(prefix_handler.prepare_prefix(conf, args.nginx_conf))
-    if args.run_migrations or not dao.db:migrations_initialized() then
+    if args.run_migrations then
       assert(dao:run_migrations())
     end
-    assert(dao:are_migrations_uptodate())
+    local ok, err = dao:are_migrations_uptodate()
+    if not ok then
+      -- we cannot start, throw a very descriptive error to instruct the user
+      error("\nThe current database schema does not match this version of Kong. Please run\n" .. 
+            "`kong migrations up` first to update/initialise the database schema. Be aware\n" .. 
+            "that Kong migrations should only run from a single node, and that nodes\n" ..
+            "running migrations concurrently will conflict with each other and might corrupt\n" .. 
+            "your database schema!\n" ..
+            "(" .. err .. ")")
+    end
     assert(nginx_signals.start(conf))
     log("Kong started")
   end, function(e)
