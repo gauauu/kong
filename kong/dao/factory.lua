@@ -297,6 +297,45 @@ function _M:are_migrations_uptodate()
   return true
 end
 
+function _M:wait_for_schema_consensus(timeout)
+  if self.db.name ~= "cassandra" then
+    return true -- only applicable for cassandra
+  end
+
+  local log = require "kong.cmd.utils.log"
+
+  local ok, err = self.db:first_coordinator()
+  if not ok then
+    return ret_error_string(self.db.name, nil,
+                            "could not find coordinator: " .. err)
+  end
+
+  log.verbose("now checking schema consensus")
+
+  if timeout then
+    -- TODO: here's a hack to enable a configurable timeout, should be
+    -- updated when the cassandra driver allows to set it
+    local old_timeout
+    old_timeout, self.db.max_schema_consensus_wait = self.db.max_schema_consensus_wait, timeout
+    ok, err = self.db:wait_for_schema_consensus()
+    self.db.max_schema_consensus_wait = old_timeout
+  else
+    ok, err = self.db:wait_for_schema_consensus()
+  end
+  if not ok then
+    return ret_error_string(self.db.name, nil,
+                            "check for schema consensus failed: " .. err)
+  end
+
+  ok, err = self.db:close_coordinator()
+  if not ok then
+    return ret_error_string(self.db.name, nil,
+                            "could not close coordinator: " .. err)
+  end
+
+  return true
+end
+
 function _M:run_migrations(on_migrate, on_success)
   on_migrate = on_migrate or default_on_migrate
   on_success = on_success or default_on_success
@@ -336,17 +375,6 @@ function _M:run_migrations(on_migrate, on_success)
   end
 
   if self.db.name == "cassandra" then
-    if migrations_ran > 0 then
-      log.verbose("now waiting for schema consensus (%dms) timeout",
-                  self.db.cluster.max_schema_consensus_wait)
-
-      local ok, err = self.db:wait_for_schema_consensus()
-      if not ok then
-        return ret_error_string(self.db.name, nil,
-                                "failed waiting for schema consensus: " .. err)
-      end
-    end
-
     ok, err = self.db:close_coordinator()
     if not ok then
       return ret_error_string(self.db.name, nil,
@@ -355,6 +383,11 @@ function _M:run_migrations(on_migrate, on_success)
   end
 
   if migrations_ran > 0 then
+    local ok, err = self:wait_for_schema_consensus()
+    if not ok then
+      return nil, err
+    end
+
     log("%d migrations ran", migrations_ran)
   end
 

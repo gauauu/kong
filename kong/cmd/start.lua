@@ -21,6 +21,9 @@ local function execute(args)
       assert(dao:run_migrations())
     end
     local ok, err = dao:are_migrations_uptodate()
+    if ok then
+      ok, err = dao:wait_for_schema_consensus(0)
+    end
     if not ok then
       -- we cannot start, throw a very descriptive error to instruct the user
       error("\nThe current database schema does not match this version of Kong. Please run\n" .. 
