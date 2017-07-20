@@ -90,16 +90,13 @@ function DAO:new(db, model_mt, schema, constraints)
   self.constraints = constraints
 end
 
-function DAO:cache_key(...)
-  local t = utils.pack(...)
-
-  for i = 1, t.n do
-    if t[i] == nil then
-      t[i] = ""
-    end
-  end
-
-  return fmt("%s:%s", self.table, concat(t, ":"))
+function DAO:cache_key(arg1, arg2, arg3, arg4, arg5)
+  return fmt("%s:%s:%s:%s:%s:%s", self.table,
+             arg1 == nil and "" or arg1,
+             arg2 == nil and "" or arg2,
+             arg3 == nil and "" or arg3,
+             arg4 == nil and "" or arg4,
+             arg5 == nil and "" or arg5)
 end
 
 function DAO:entity_cache_key(entity)
