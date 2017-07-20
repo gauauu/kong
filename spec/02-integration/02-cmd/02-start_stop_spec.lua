@@ -106,7 +106,7 @@ describe("kong start/stop", function()
       }))
     end)
     it("resolves #postgres hostname", function()
-      assert(helpers.kong_exec("start --conf "..helpers.test_conf_path, {
+      assert(helpers.kong_exec("start --conf " .. helpers.test_conf_path, {
         pg_host = "localhost",
         database = "postgres"
       }))

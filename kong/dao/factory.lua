@@ -312,16 +312,7 @@ function _M:wait_for_schema_consensus(timeout)
 
   log.verbose("now checking schema consensus")
 
-  if timeout then
-    -- TODO: here's a hack to enable a configurable timeout, should be
-    -- updated when the cassandra driver allows to set it
-    local old_timeout
-    old_timeout, self.db.max_schema_consensus_wait = self.db.max_schema_consensus_wait, timeout
-    ok, err = self.db:wait_for_schema_consensus()
-    self.db.max_schema_consensus_wait = old_timeout
-  else
-    ok, err = self.db:wait_for_schema_consensus()
-  end
+  ok, err = self.db:wait_for_schema_consensus(timeout)
   if not ok then
     return ret_error_string(self.db.name, nil,
                             "check for schema consensus failed: " .. err)
