@@ -14,6 +14,7 @@ return {
     ldap_host = {required = true, type = "string"},
     ldap_port = {required = true, type = "number"},
     start_tls = {required = true, type = "boolean", default = false},
+    ldaps = {required = true, type = "boolean", default = false},
     verify_ldap_host = {required = true, type = "boolean", default = false},
     base_dn = {required = true, type = "string"},
     attribute = {required = true, type = "string"},
