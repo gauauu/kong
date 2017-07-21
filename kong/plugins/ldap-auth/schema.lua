@@ -23,5 +23,11 @@ return {
     timeout = {type = "number", default = 10000},
     keepalive = {type = "number", default = 60000},
     anonymous = {type = "string", default = "", func = check_user},
-  }
+  },
+  self_check = function(schema, plugin_t, dao, is_update)
+    if plugin_t.ldaps and plugin_t.start_tls then
+       return false, Errors.schema "LDAPS and StartTLS cannot be enabled simultaneously. You need to enable only one of the two."
+    end
+    return true
+  end
 }
