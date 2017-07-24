@@ -1,4 +1,5 @@
 local utils = require "kong.tools.utils"
+local Errors = require "kong.dao.errors"
 
 local function check_user(anonymous)
   if anonymous == "" or utils.is_valid_uuid(anonymous) then
